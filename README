@@ -1,0 +1,21 @@
+1, Compy
+Compy is an HTTP/HTTPS proxy with mitm support and basic content compression/transcoding capabilities.
+
+2, Features:
+- HTTPS proxy (encrypted connection between client and proxy)
+- man in the middle support
+- gzip compression
+- transcode animated gif to static image
+- transcode jpeg to desired quality using libjpeg
+- transcode png
+- html/css/js minification
+
+3, Usage
+See compy --help
+
+4, Credits
+https://github.com/pixiv/go-libjpeg
+https://github.com/tdewolff/minify
+
+5, License
+See LICENSE
