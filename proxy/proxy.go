@@ -79,7 +79,7 @@ func (p *Proxy) proxyResponse(w *ResponseWriter, r *ResponseReader) error {
 	w.takeHeaders(r)
 	transcoder, found := p.transcoders[r.ContentType()]
 	if !found {
-		return w.writeFrom(r)
+		return w.ReadFrom(r)
 	}
 	w.setChunked()
 	if err := transcoder.Transcode(w, r); err != nil {

@@ -55,28 +55,33 @@ func (w *ResponseWriter) takeHeaders(r *ResponseReader) {
 	w.WriteHeader(r.r.StatusCode)
 }
 
-func (w *ResponseWriter) WriteHeader(s int) {
-	w.statusCode = s
-}
-
 func (w *ResponseWriter) Header() http.Header {
 	return w.rw.Header()
 }
 
-func (w *ResponseWriter) writeFrom(r *ResponseReader) error {
-	w.rw.WriteHeader(r.r.StatusCode)
-	_, err := io.Copy(w.rw, r)
+func (w *ResponseWriter) WriteHeader(s int) {
+	w.statusCode = s
+}
+
+func (w *ResponseWriter) ReadFrom(r io.Reader) error {
+	w.flushHeaders()
+	_, err := io.Copy(w.Writer, r)
 	return err
+}
+
+func (w *ResponseWriter) Write(b []byte) (int, error) {
+	w.flushHeaders()
+	return w.Writer.Write(b)
+}
+
+func (w *ResponseWriter) flushHeaders() {
+	if w.headersDone {
+		return
+	}
+	w.rw.WriteHeader(w.statusCode)
+	w.headersDone = true
 }
 
 func (w *ResponseWriter) setChunked() {
 	w.Header().Del("Content-Length")
-}
-
-func (w *ResponseWriter) Write(b []byte) (int, error) {
-	if !w.headersDone {
-		w.rw.WriteHeader(w.statusCode)
-		w.headersDone = true
-	}
-	return w.Writer.Write(b)
 }
