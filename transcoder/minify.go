@@ -6,15 +6,10 @@ import (
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/html"
 	"github.com/tdewolff/minify/js"
-	"github.com/tdewolff/parse"
 )
 
-func init() {
-	parse.MaxBuf *= 8
-}
-
 type Minifier struct {
-	m minify.Minify
+	m *minify.Minify
 }
 
 func NewMinifier() *Minifier {
