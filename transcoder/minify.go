@@ -9,7 +9,7 @@ import (
 )
 
 type Minifier struct {
-	m *minify.Minify
+	m *minify.M
 }
 
 func NewMinifier() *Minifier {
