@@ -66,7 +66,11 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 
 func forward(r *http.Request) (*http.Response, error) {
 	if r.URL.Scheme == "" {
-		r.URL.Scheme = "https"
+		if r.TLS != nil && r.TLS.ServerName == r.Host {
+			r.URL.Scheme = "https"
+		} else {
+			r.URL.Scheme = "http"
+		}
 	}
 	if r.URL.Host == "" {
 		r.URL.Host = r.Host
