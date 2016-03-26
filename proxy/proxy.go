@@ -53,7 +53,7 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "CONNECT" {
-		return p.handleConnect(w, r.Host)
+		return p.handleConnect(w, r)
 	}
 	resp, err := forward(r)
 	if err != nil {
@@ -88,24 +88,19 @@ func (p *Proxy) proxyResponse(w *ResponseWriter, r *ResponseReader) error {
 	return nil
 }
 
-func (p *Proxy) handleConnect(w http.ResponseWriter, host string) error {
+func (p *Proxy) handleConnect(w http.ResponseWriter, r *http.Request) error {
 	if p.ml == nil {
 		return fmt.Errorf("CONNECT received but mitm is not enabled")
 	}
-	h, ok := w.(http.Hijacker)
-	if !ok {
-		return fmt.Errorf("connection cannot be hijacked")
-	}
 	w.WriteHeader(http.StatusOK)
-	conn, _, err := h.Hijack()
+	fw := w.(FlushWriter)
+	fw.Flush()
+	conn := newMitmConn(fw, r.Body, r.RemoteAddr)
+	sconn, err := p.ml.Serve(conn, r.Host)
 	if err != nil {
-		return err
-	}
-	sconn, err := p.ml.Serve(conn, host)
-	if err != nil {
-		conn.Close()
 		return err
 	}
 	sconn.Close() // TODO: reuse this connection for https requests
+	<-conn.closed
 	return nil
 }
