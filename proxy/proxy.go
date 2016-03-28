@@ -3,6 +3,7 @@ package proxy
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 )
 
@@ -97,14 +98,23 @@ func (p *Proxy) handleConnect(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("CONNECT received but mitm is not enabled")
 	}
 	w.WriteHeader(http.StatusOK)
-	fw := w.(FlushWriter)
-	fw.Flush()
-	conn := newMitmConn(fw, r.Body, r.RemoteAddr)
+	var conn net.Conn
+	if h, ok := w.(http.Hijacker); ok {
+		conn, _, _ = h.Hijack()
+	} else {
+		fw := w.(FlushWriter)
+		fw.Flush()
+		mconn := newMitmConn(fw, r.Body, r.RemoteAddr)
+		conn = mconn
+		defer func() {
+			<-mconn.closed
+		}()
+	}
 	sconn, err := p.ml.Serve(conn, r.Host)
 	if err != nil {
+		conn.Close()
 		return err
 	}
 	sconn.Close() // TODO: reuse this connection for https requests
-	<-conn.closed
 	return nil
 }
