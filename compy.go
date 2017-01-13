@@ -6,6 +6,9 @@ import (
 	"github.com/barnacs/compy/proxy"
 	tc "github.com/barnacs/compy/transcoder"
 	"log"
+	"os"
+	"os/signal"
+	"sync/atomic"
 )
 
 var (
@@ -54,6 +57,20 @@ func main() {
 	p.AddTranscoder("text/javascript", ttc)
 	p.AddTranscoder("application/javascript", ttc)
 	p.AddTranscoder("application/x-javascript", ttc)
+
+	c := make(chan os.Signal, 2)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for _ = range c {
+			read := atomic.LoadUint64(&p.ReadCount)
+			written := atomic.LoadUint64(&p.WriteCount)
+			log.Printf("compy exiting, total transcoded: %d -> %d (%3.1f%%)",
+				read, written, float64(written)/float64(read)*100)
+			os.Exit(0)
+		}
+	}()
+
+	log.Printf("compy listening on %s", *host)
 
 	var err error
 	if *cert != "" {
