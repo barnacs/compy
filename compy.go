@@ -26,6 +26,14 @@ func main() {
 
 	p := proxy.New()
 
+	if (*ca == "") != (*caKey == "") {
+		log.Fatalln("must specify both CA certificate and key")
+	}
+
+	if (*cert == "") != (*key == "") {
+		log.Fatalln("must specify both certificate and key")
+	}
+
 	if *ca != "" {
 		if err := p.EnableMitm(*ca, *caKey); err != nil {
 			fmt.Println("not using mitm:", err)
