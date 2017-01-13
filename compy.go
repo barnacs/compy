@@ -18,6 +18,7 @@ var (
 	ca    = flag.String("ca", "", "CA path")
 	caKey = flag.String("cakey", "", "CA key path")
 
+	brotli = flag.Int("brotli", -1, "Brotli compression level (0-11, default 6)")
 	jpeg   = flag.Int("jpeg", 50, "jpeg quality (1-100, 0 to disable)")
 	gif    = flag.Bool("gif", true, "transcode gifs into static images")
 	gzip   = flag.Int("gzip", -1, "gzip compression level (0-9, default 6)")
@@ -56,9 +57,9 @@ func main() {
 
 	var ttc proxy.Transcoder
 	if *minify {
-		ttc = &tc.Gzip{tc.NewMinifier(), *gzip, false}
+		ttc = &tc.Zip{tc.NewMinifier(), *brotli, *gzip, false}
 	} else {
-		ttc = &tc.Gzip{&tc.Identity{}, *gzip, true}
+		ttc = &tc.Zip{&tc.Identity{}, *brotli, *gzip, true}
 	}
 
 	p.AddTranscoder("text/css", ttc)

@@ -15,6 +15,7 @@ import (
 	"github.com/barnacs/compy/proxy"
 	tc "github.com/barnacs/compy/transcoder"
 	"github.com/chai2010/webp"
+	brotlidec "gopkg.in/kothar/brotli-go.v0/dec"
 )
 
 func Test(t *testing.T) {
@@ -34,7 +35,7 @@ func (s *CompyTest) SetUpSuite(c *C) {
 
 	s.proxy = proxy.New()
 	s.proxy.AddTranscoder("image/jpeg", tc.NewJpeg(50))
-	s.proxy.AddTranscoder("text/html", &tc.Gzip{&tc.Identity{}, *gzip, true})
+	s.proxy.AddTranscoder("text/html", &tc.Zip{&tc.Identity{}, *brotli, *gzip, true})
 	go func() {
 		err := s.proxy.Start(*host)
 		if err != nil {
@@ -88,6 +89,23 @@ func (s *CompyTest) TestGzip(c *C) {
 	c.Assert(err, IsNil)
 	defer gzr.Close()
 	_, err = ioutil.ReadAll(gzr)
+	c.Assert(err, IsNil)
+}
+
+func (s *CompyTest) TestBrotli(c *C) {
+	req, err := http.NewRequest("GET", s.server.URL+"/html", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("Accept-Encoding", "br, gzip")
+
+	resp, err := s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Encoding"), Equals, "br")
+
+	brr := brotlidec.NewBrotliReader(resp.Body)
+	defer brr.Close()
+	_, err = ioutil.ReadAll(brr)
 	c.Assert(err, IsNil)
 }
 

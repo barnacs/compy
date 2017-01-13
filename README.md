@@ -11,7 +11,7 @@ Features:
 - HTTPS proxy (encrypted connection between client and proxy)
 - man in the middle support (compress HTTPS traffic)
 - HTTP2 support (over TLS)
-- gzip compression
+- Brotli and gzip compression
 - transcode animated GIFs to static images
 - transcode JPEG images to desired quality using libjpeg
 - transcode PNG and JPEG images to WebP
