@@ -3,6 +3,8 @@ package transcoder
 import (
 	"compress/gzip"
 	"github.com/barnacs/compy/proxy"
+	"net/http"
+	"strings"
 )
 
 type Gzip struct {
@@ -10,7 +12,7 @@ type Gzip struct {
 	SkipGzipped bool
 }
 
-func (t *Gzip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader) error {
+func (t *Gzip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader, headers http.Header) error {
 	if t.decompress(r) {
 		gzr, err := gzip.NewReader(r.Reader)
 		if err != nil {
@@ -21,13 +23,22 @@ func (t *Gzip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader) error
 		r.Header().Del("Content-Encoding")
 		w.Header().Del("Content-Encoding")
 	}
-	if compress(r) {
+
+	shouldGzip := false
+	for _, v := range strings.Split(headers.Get("Accept-Encoding"), ", ") {
+		if strings.SplitN(v, ";", 2)[0] == "gzip" {
+			shouldGzip = true
+			break
+		}
+	}
+
+	if shouldGzip && compress(r) {
 		gzw := gzip.NewWriter(w.Writer)
 		defer gzw.Flush()
 		w.Writer = gzw
 		w.Header().Set("Content-Encoding", "gzip")
 	}
-	return t.Transcoder.Transcode(w, r)
+	return t.Transcoder.Transcode(w, r, headers)
 }
 
 func (t *Gzip) decompress(r *proxy.ResponseReader) bool {

@@ -3,6 +3,7 @@ package transcoder
 import (
 	"github.com/barnacs/compy/proxy"
 	"github.com/pixiv/go-libjpeg/jpeg"
+	"net/http"
 )
 
 type Jpeg struct {
@@ -20,7 +21,7 @@ func NewJpeg(quality int) *Jpeg {
 	}
 }
 
-func (t *Jpeg) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader) error {
+func (t *Jpeg) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader, headers http.Header) error {
 	img, err := jpeg.Decode(r, t.decOptions)
 	if err != nil {
 		return err
