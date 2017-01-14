@@ -4,17 +4,22 @@ import (
 	"io"
 	"mime"
 	"net/http"
+
+	"github.com/miolini/datacounter"
 )
 
 type ResponseReader struct {
 	io.Reader
-	r *http.Response
+	counter *datacounter.ReaderCounter
+	r       *http.Response
 }
 
 func newResponseReader(r *http.Response) *ResponseReader {
+	counter := datacounter.NewReaderCounter(r.Body)
 	return &ResponseReader{
-		Reader: r.Body,
-		r:      r,
+		Reader:  counter,
+		counter: counter,
+		r:       r,
 	}
 }
 
@@ -34,15 +39,16 @@ func (r *ResponseReader) Request() *http.Request {
 
 type ResponseWriter struct {
 	io.Writer
-	rw          http.ResponseWriter
+	rw          *datacounter.ResponseWriterCounter
 	statusCode  int
 	headersDone bool
 }
 
 func newResponseWriter(w http.ResponseWriter) *ResponseWriter {
+	rw := datacounter.NewResponseWriterCounter(w)
 	return &ResponseWriter{
-		Writer: w,
-		rw:     w,
+		Writer: rw,
+		rw:     rw,
 	}
 }
 
