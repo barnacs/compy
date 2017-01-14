@@ -69,7 +69,7 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	rw := newResponseWriter(w)
 	rr := newResponseReader(resp)
 	err = p.proxyResponse(rw, rr)
-	read := rr.Count()
+	read := rr.counter.Count()
 	written := rw.rw.Count()
 	log.Printf("transcoded: %d -> %d (%3.1f%%)", read, written, float64(written)/float64(read)*100)
 	atomic.AddUint64(&p.ReadCount, read)

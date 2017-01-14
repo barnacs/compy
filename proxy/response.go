@@ -9,14 +9,17 @@ import (
 )
 
 type ResponseReader struct {
-	datacounter.ReaderCounter
-	r *http.Response
+	io.Reader
+	counter *datacounter.ReaderCounter
+	r       *http.Response
 }
 
 func newResponseReader(r *http.Response) *ResponseReader {
+	counter := datacounter.NewReaderCounter(r.Body)
 	return &ResponseReader{
-		ReaderCounter: *datacounter.NewReaderCounter(r.Body),
-		r:             r,
+		Reader:  counter,
+		counter: counter,
+		r:       r,
 	}
 }
 
