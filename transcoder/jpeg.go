@@ -2,6 +2,7 @@ package transcoder
 
 import (
 	"github.com/barnacs/compy/proxy"
+	"github.com/chai2010/webp"
 	"github.com/pixiv/go-libjpeg/jpeg"
 	"net/http"
 )
@@ -26,8 +27,19 @@ func (t *Jpeg) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader, heade
 	if err != nil {
 		return err
 	}
-	if err = jpeg.Encode(w, img, t.encOptions); err != nil {
-		return err
+
+	if SupportsWebP(headers) {
+		options := webp.Options{
+			Lossless: false,
+			Quality:  float32(t.encOptions.Quality),
+		}
+		if err = webp.Encode(w, img, &options); err != nil {
+			return err
+		}
+	} else {
+		if err = jpeg.Encode(w, img, t.encOptions); err != nil {
+			return err
+		}
 	}
 	return nil
 }
