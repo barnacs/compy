@@ -7,7 +7,8 @@ import (
 
 type Gzip struct {
 	proxy.Transcoder
-	SkipGzipped bool
+	CompressionLevel int
+	SkipGzipped      bool
 }
 
 func (t *Gzip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader) error {
@@ -22,7 +23,10 @@ func (t *Gzip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader) error
 		w.Header().Del("Content-Encoding")
 	}
 	if compress(r) {
-		gzw := gzip.NewWriter(w.Writer)
+		gzw, err := gzip.NewWriterLevel(w.Writer, t.CompressionLevel)
+		if err != nil {
+			return err
+		}
 		defer gzw.Flush()
 		w.Writer = gzw
 		w.Header().Set("Content-Encoding", "gzip")
