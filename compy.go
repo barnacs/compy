@@ -20,6 +20,7 @@ var (
 
 	jpeg   = flag.Int("jpeg", 50, "jpeg quality (1-100, 0 to disable)")
 	gif    = flag.Bool("gif", true, "transcode gifs into static images")
+	gzip   = flag.Int("gzip", -1, "gzip compression level (0-9, default 6)")
 	png    = flag.Bool("png", true, "transcode png")
 	minify = flag.Bool("minify", false, "minify css/html/js - WARNING: tends to break the web")
 )
@@ -55,9 +56,9 @@ func main() {
 
 	var ttc proxy.Transcoder
 	if *minify {
-		ttc = &tc.Gzip{tc.NewMinifier(), false}
+		ttc = &tc.Gzip{tc.NewMinifier(), *gzip, false}
 	} else {
-		ttc = &tc.Gzip{&tc.Identity{}, true}
+		ttc = &tc.Gzip{&tc.Identity{}, *gzip, true}
 	}
 
 	p.AddTranscoder("text/css", ttc)
