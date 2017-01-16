@@ -16,7 +16,7 @@ type Proxy struct {
 }
 
 type Transcoder interface {
-	Transcode(*ResponseWriter, *ResponseReader) error
+	Transcode(*ResponseWriter, *ResponseReader, http.Header) error
 }
 
 func New() *Proxy {
@@ -68,7 +68,7 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	defer resp.Body.Close()
 	rw := newResponseWriter(w)
 	rr := newResponseReader(resp)
-	err = p.proxyResponse(rw, rr)
+	err = p.proxyResponse(rw, rr, r.Header)
 	read := rr.counter.Count()
 	written := rw.rw.Count()
 	log.Printf("transcoded: %d -> %d (%3.1f%%)", read, written, float64(written)/float64(read)*100)
@@ -92,14 +92,14 @@ func forward(r *http.Request) (*http.Response, error) {
 	return http.DefaultTransport.RoundTrip(r)
 }
 
-func (p *Proxy) proxyResponse(w *ResponseWriter, r *ResponseReader) error {
+func (p *Proxy) proxyResponse(w *ResponseWriter, r *ResponseReader, headers http.Header) error {
 	w.takeHeaders(r)
 	transcoder, found := p.transcoders[r.ContentType()]
 	if !found {
 		return w.ReadFrom(r)
 	}
 	w.setChunked()
-	if err := transcoder.Transcode(w, r); err != nil {
+	if err := transcoder.Transcode(w, r, headers); err != nil {
 		return fmt.Errorf("transcoding error: %s", err)
 	}
 	return nil
