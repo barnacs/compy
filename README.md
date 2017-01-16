@@ -14,7 +14,7 @@ Features:
 - gzip compression
 - transcode animated gifs to static images
 - transcode jpeg images to desired quality using libjpeg
-- transcode png images
+- transcode PNG and JPEG images to WebP
 - html/css/js minification
 
 
