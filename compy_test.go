@@ -3,6 +3,7 @@ package main
 import (
 	. "gopkg.in/check.v1"
 
+	gzipp "compress/gzip"
 	jpegp "image/jpeg"
 	"net/http"
 	"net/http/httptest"
@@ -41,7 +42,11 @@ func (s *CompyTest) SetUpSuite(c *C) {
 	}()
 
 	proxyUrl := &url.URL{Scheme: "http", Host: "localhost" + *host}
-	s.client = &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyUrl)}}
+	tr := &http.Transport{
+		DisableCompression: true,
+		Proxy:              http.ProxyURL(proxyUrl),
+	}
+	s.client = &http.Client{Transport: tr}
 }
 
 func (s *CompyTest) TearDownSuite(c *C) {
@@ -54,6 +59,32 @@ func (s *CompyTest) TestHttpBin(c *C) {
 	resp, err := s.client.Get(s.server.URL + "/status/200")
 	c.Assert(err, IsNil)
 	c.Assert(resp.StatusCode, Equals, 200)
+}
+
+func (s *CompyTest) TestNoGzip(c *C) {
+	resp, err := http.Get(s.server.URL + "/html")
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Encoding"), Equals, "")
+
+	_, err = gzipp.NewReader(resp.Body)
+	c.Assert(err, NotNil)
+}
+
+func (s *CompyTest) TestGzip(c *C) {
+	req, err := http.NewRequest("GET", s.server.URL+"/html", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("Accept-Encoding", "gzip")
+
+	resp, err := s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Encoding"), Equals, "gzip")
+
+	_, err = gzipp.NewReader(resp.Body)
+	c.Assert(err, IsNil)
 }
 
 func (s *CompyTest) TestJpeg(c *C) {
