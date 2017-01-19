@@ -134,6 +134,21 @@ func (s *CompyTest) TestGif(c *C) {
 	c.Assert(uncompressedLength > compressedLength, Equals, true)
 }
 
+func (s *CompyTest) TestGifToWebP(c *C) {
+	req, err := http.NewRequest("GET", s.server.URL+"/image/gif", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("Accept", "image/webp")
+
+	resp, err := s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Type"), Equals, "image/webp")
+
+	_, err = webp.Decode(resp.Body)
+	c.Assert(err, IsNil)
+}
+
 func (s *CompyTest) TestJpeg(c *C) {
 	resp, err := s.client.Get(s.server.URL + "/image/jpeg")
 	c.Assert(err, IsNil)
