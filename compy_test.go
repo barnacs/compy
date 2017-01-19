@@ -5,6 +5,7 @@ import (
 
 	gzipp "compress/gzip"
 	jpegp "image/jpeg"
+	pngp "image/png"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -35,6 +36,7 @@ func (s *CompyTest) SetUpSuite(c *C) {
 
 	s.proxy = proxy.New()
 	s.proxy.AddTranscoder("image/jpeg", tc.NewJpeg(50))
+	s.proxy.AddTranscoder("image/png", &tc.Png{})
 	s.proxy.AddTranscoder("text/html", &tc.Zip{&tc.Identity{}, *brotli, *gzip, true})
 	go func() {
 		err := s.proxy.Start(*host)
@@ -123,10 +125,38 @@ func (s *CompyTest) TestJpeg(c *C) {
 	c.Assert(err, IsNil)
 }
 
-func (s *CompyTest) TestWebP(c *C) {
+func (s *CompyTest) TestJpegToWebP(c *C) {
 	req, err := http.NewRequest("GET", s.server.URL+"/image/jpeg", nil)
 	c.Assert(err, IsNil)
 	req.Header.Add("Accept", "image/webp,image/jpeg")
+
+	resp, err := s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Type"), Equals, "image/webp")
+
+	_, err = webp.Decode(resp.Body)
+	c.Assert(err, IsNil)
+}
+
+func (s *CompyTest) TestPng(c *C) {
+	req, err := http.NewRequest("GET", s.server.URL+"/image/png", nil)
+	c.Assert(err, IsNil)
+
+	resp, err := s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Type"), Equals, "image/png")
+
+	_, err = pngp.Decode(resp.Body)
+	c.Assert(err, IsNil)
+}
+func (s *CompyTest) TestPngToWebP(c *C) {
+	req, err := http.NewRequest("GET", s.server.URL+"/image/png", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("Accept", "image/webp")
 
 	resp, err := s.client.Do(req)
 	c.Assert(err, IsNil)
