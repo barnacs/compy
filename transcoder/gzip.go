@@ -38,7 +38,7 @@ func (t *Gzip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader, heade
 		if err != nil {
 			return err
 		}
-		defer gzw.Flush()
+		defer gzw.Close()
 		w.Writer = gzw
 		w.Header().Set("Content-Encoding", "gzip")
 	}

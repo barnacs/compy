@@ -5,6 +5,7 @@ import (
 
 	gzipp "compress/gzip"
 	jpegp "image/jpeg"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -83,7 +84,10 @@ func (s *CompyTest) TestGzip(c *C) {
 	c.Assert(resp.StatusCode, Equals, 200)
 	c.Assert(resp.Header.Get("Content-Encoding"), Equals, "gzip")
 
-	_, err = gzipp.NewReader(resp.Body)
+	gzr, err := gzipp.NewReader(resp.Body)
+	c.Assert(err, IsNil)
+	defer gzr.Close()
+	_, err = ioutil.ReadAll(gzr)
 	c.Assert(err, IsNil)
 }
 
