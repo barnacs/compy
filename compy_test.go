@@ -3,7 +3,9 @@ package main
 import (
 	. "gopkg.in/check.v1"
 
+	"bytes"
 	gzipp "compress/gzip"
+	gifp "image/gif"
 	jpegp "image/jpeg"
 	pngp "image/png"
 	"io/ioutil"
@@ -35,6 +37,7 @@ func (s *CompyTest) SetUpSuite(c *C) {
 	s.server = httptest.NewServer(httpbin.GetMux())
 
 	s.proxy = proxy.New()
+	s.proxy.AddTranscoder("image/gif", &tc.Gif{})
 	s.proxy.AddTranscoder("image/jpeg", tc.NewJpeg(50))
 	s.proxy.AddTranscoder("image/png", &tc.Png{})
 	s.proxy.AddTranscoder("text/html", &tc.Zip{&tc.Identity{}, *brotli, *gzip, true})
@@ -109,6 +112,25 @@ func (s *CompyTest) TestBrotli(c *C) {
 	defer brr.Close()
 	_, err = ioutil.ReadAll(brr)
 	c.Assert(err, IsNil)
+}
+
+func (s *CompyTest) TestGif(c *C) {
+	resp, err := http.Get(s.server.URL + "/image/gif")
+	c.Assert(err, IsNil)
+	uncompressedLength, err := new(bytes.Buffer).ReadFrom(resp.Body)
+	c.Assert(err, IsNil)
+	resp.Body.Close()
+
+	resp, err = s.client.Get(s.server.URL + "/image/gif")
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Type"), Equals, "image/gif")
+
+	_, err = gifp.Decode(resp.Body)
+	c.Assert(err, IsNil)
+	compressedLength := resp.ContentLength
+	c.Assert(uncompressedLength > compressedLength, Equals, true)
 }
 
 func (s *CompyTest) TestJpeg(c *C) {
