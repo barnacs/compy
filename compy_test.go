@@ -112,10 +112,7 @@ func (s *CompyTest) TestBrotli(c *C) {
 }
 
 func (s *CompyTest) TestJpeg(c *C) {
-	req, err := http.NewRequest("GET", s.server.URL+"/image/jpeg", nil)
-	c.Assert(err, IsNil)
-
-	resp, err := s.client.Do(req)
+	resp, err := s.client.Get(s.server.URL + "/image/jpeg")
 	c.Assert(err, IsNil)
 	defer resp.Body.Close()
 	c.Assert(resp.StatusCode, Equals, 200)
@@ -141,10 +138,7 @@ func (s *CompyTest) TestJpegToWebP(c *C) {
 }
 
 func (s *CompyTest) TestPng(c *C) {
-	req, err := http.NewRequest("GET", s.server.URL+"/image/png", nil)
-	c.Assert(err, IsNil)
-
-	resp, err := s.client.Do(req)
+	resp, err := s.client.Get(s.server.URL + "/image/png")
 	c.Assert(err, IsNil)
 	defer resp.Body.Close()
 	c.Assert(resp.StatusCode, Equals, 200)
