@@ -5,6 +5,7 @@ import (
 	"github.com/chai2010/webp"
 	"github.com/pixiv/go-libjpeg/jpeg"
 	"net/http"
+	"strconv"
 )
 
 type Jpeg struct {
@@ -28,17 +29,27 @@ func (t *Jpeg) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader, heade
 		return err
 	}
 
+	encOptions := t.encOptions
+	qualityString := headers.Get("X-Compy-Quality")
+	if qualityString != "" {
+		if quality, err := strconv.Atoi(qualityString); err != nil {
+			return err
+		} else {
+			encOptions.Quality = quality
+		}
+	}
+
 	if SupportsWebP(headers) {
 		w.Header().Set("Content-Type", "image/webp")
 		options := webp.Options{
 			Lossless: false,
-			Quality:  float32(t.encOptions.Quality),
+			Quality:  float32(encOptions.Quality),
 		}
 		if err = webp.Encode(w, img, &options); err != nil {
 			return err
 		}
 	} else {
-		if err = jpeg.Encode(w, img, t.encOptions); err != nil {
+		if err = jpeg.Encode(w, img, encOptions); err != nil {
 			return err
 		}
 	}

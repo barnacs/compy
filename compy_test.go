@@ -145,6 +145,34 @@ func (s *CompyTest) TestJpeg(c *C) {
 	c.Assert(err, IsNil)
 }
 
+func (s *CompyTest) TestJpegQuality(c *C) {
+	req, err := http.NewRequest("GET", s.server.URL+"/image/jpeg", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("X-Compy-Quality", "10")
+
+	resp, err := s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Type"), Equals, "image/jpeg")
+	len10, err := new(bytes.Buffer).ReadFrom(resp.Body)
+	c.Assert(err, IsNil)
+
+	req, err = http.NewRequest("GET", s.server.URL+"/image/jpeg", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("X-Compy-Quality", "90")
+
+	resp, err = s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+	c.Assert(resp.Header.Get("Content-Type"), Equals, "image/jpeg")
+	len90, err := new(bytes.Buffer).ReadFrom(resp.Body)
+	c.Assert(err, IsNil)
+
+	c.Assert(len10 < len90, Equals, true)
+}
+
 func (s *CompyTest) TestJpegToWebP(c *C) {
 	req, err := http.NewRequest("GET", s.server.URL+"/image/jpeg", nil)
 	c.Assert(err, IsNil)
