@@ -52,15 +52,15 @@ func (c *mitmConn) LocalAddr() net.Addr {
 }
 
 func (c *mitmConn) SetDeadline(t time.Time) error {
-	panic("not implemented")
+	return nil
 }
 
 func (c *mitmConn) SetReadDeadline(t time.Time) error {
-	panic("not implemented")
+	return nil
 }
 
 func (c *mitmConn) SetWriteDeadline(t time.Time) error {
-	panic("not implemented")
+	return nil
 }
 
 type addr string
