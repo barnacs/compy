@@ -17,6 +17,8 @@ var (
 	key   = flag.String("key", "", "proxy cert key path")
 	ca    = flag.String("ca", "", "CA path")
 	caKey = flag.String("cakey", "", "CA key path")
+	user  = flag.String("user", "", "proxy user name")
+	pass  = flag.String("pass", "", "proxy password")
 
 	brotli = flag.Int("brotli", -1, "Brotli compression level (0-11, default 6)")
 	jpeg   = flag.Int("jpeg", 50, "jpeg quality (1-100, 0 to disable)")
@@ -43,6 +45,13 @@ func main() {
 		if err := p.EnableMitm(*ca, *caKey); err != nil {
 			fmt.Println("not using mitm:", err)
 		}
+	}
+
+	// TODO: require cert and key?
+	if (*user == "") != (*pass == "") {
+		log.Fatalln("must specify both user and pass")
+	} else {
+		p.SetAuthentication(*user, *pass)
 	}
 
 	if *jpeg != 0 {

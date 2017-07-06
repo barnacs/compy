@@ -76,6 +76,12 @@ Probably the best option is to run it with both TLS and MitM support, combining 
 compy -cert cert.crt -key cert.key -ca ca.crt -cakey ca.key
 ```
 
+You can limit access to your proxy via HTTP BASIC authentication:
+
+```
+compy -cert cert.crt -key cert.key -user myuser -pass mypass
+```
+
 You can also specify the listen port (defaults to 9999):  
 ```
 compy -host :9999

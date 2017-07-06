@@ -1,10 +1,12 @@
 package proxy
 
 import (
+	"encoding/base64"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"strings"
 	"sync/atomic"
 )
 
@@ -13,6 +15,8 @@ type Proxy struct {
 	ml          *mitmListener
 	ReadCount   uint64
 	WriteCount  uint64
+	user        string
+	pass        string
 }
 
 type Transcoder interface {
@@ -37,6 +41,11 @@ func (p *Proxy) EnableMitm(ca, key string) error {
 	return nil
 }
 
+func (p *Proxy) SetAuthentication(user, pass string) {
+	p.user = user
+	p.pass = pass
+}
+
 func (p *Proxy) AddTranscoder(contentType string, transcoder Transcoder) {
 	p.transcoders[contentType] = transcoder
 }
@@ -56,10 +65,36 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (p *Proxy) checkHttpBasicAuth(auth string) bool {
+	prefix := "Basic "
+	if !strings.HasPrefix(auth, prefix) {
+		return false
+	}
+	decoded, err := base64.StdEncoding.DecodeString(auth[len(prefix):])
+	if err != nil {
+		return false
+	}
+	values := strings.SplitN(string(decoded), ":", 2)
+	if len(values) != 2 || values[0] != p.user || values[1] != p.pass {
+		return false
+	}
+	return true
+}
+
 func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	if r.Method == "CONNECT" {
 		return p.handleConnect(w, r)
 	}
+
+	// TODO: only HTTPS?
+	if p.user != "" {
+		if !p.checkHttpBasicAuth(r.Header.Get("Proxy-Authorization")) {
+			w.Header().Set("WWW-Authenticate", "Basic realm=\"Compy\"")
+			w.WriteHeader(http.StatusProxyAuthRequired)
+			return nil
+		}
+	}
+
 	resp, err := forward(r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

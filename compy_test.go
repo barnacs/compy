@@ -5,6 +5,7 @@ import (
 
 	"bytes"
 	gzipp "compress/gzip"
+	"encoding/base64"
 	gifp "image/gif"
 	jpegp "image/jpeg"
 	pngp "image/png"
@@ -182,4 +183,35 @@ func (s *CompyTest) TestPngToWebP(c *C) {
 
 	_, err = webp.Decode(resp.Body)
 	c.Assert(err, IsNil)
+}
+
+func (s *CompyTest) TestAuthentication(c *C) {
+	s.proxy.SetAuthentication("user", "pass")
+	defer s.proxy.SetAuthentication("", "")
+
+	// no password
+	resp, err := s.client.Get(s.server.URL + "/status/200")
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 407)
+
+	// incorrect password
+	req, err := http.NewRequest("GET", s.server.URL+"/status/200", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("Proxy-Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("wrong:bad")))
+
+	resp, err = s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 407)
+
+	// correct password
+	req, err = http.NewRequest("GET", s.server.URL+"/status/200", nil)
+	c.Assert(err, IsNil)
+	req.Header.Add("Proxy-Authorization", "Basic "+base64.StdEncoding.EncodeToString([]byte("user:pass")))
+
+	resp, err = s.client.Do(req)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
 }
