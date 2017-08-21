@@ -37,7 +37,7 @@ var _ = Suite(&CompyTest{})
 func (s *CompyTest) SetUpSuite(c *C) {
 	s.server = httptest.NewServer(httpbin.GetMux())
 
-	s.proxy = proxy.New()
+	s.proxy = proxy.New("localhost"+*host, nil)
 	s.proxy.AddTranscoder("image/gif", &tc.Gif{})
 	s.proxy.AddTranscoder("image/jpeg", tc.NewJpeg(50))
 	s.proxy.AddTranscoder("image/png", &tc.Png{})
@@ -242,4 +242,21 @@ func (s *CompyTest) TestAuthentication(c *C) {
 	c.Assert(err, IsNil)
 	defer resp.Body.Close()
 	c.Assert(resp.StatusCode, Equals, 200)
+}
+
+func (s *CompyTest) TestAdmin(c *C) {
+	resp, err := s.client.Get("http://localhost" + *host)
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 200)
+
+	resp, err = s.client.Get("http://localhost" + *host + "/cacert")
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 404)
+
+	resp, err = s.client.Get("http://localhost" + *host + "/fake")
+	c.Assert(err, IsNil)
+	defer resp.Body.Close()
+	c.Assert(resp.StatusCode, Equals, 501)
 }

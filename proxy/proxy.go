@@ -1,11 +1,17 @@
 package proxy
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"sync/atomic"
 )
@@ -17,16 +23,20 @@ type Proxy struct {
 	WriteCount  uint64
 	user        string
 	pass        string
+	host        string
+	cert        *string
 }
 
 type Transcoder interface {
 	Transcode(*ResponseWriter, *ResponseReader, http.Header) error
 }
 
-func New() *Proxy {
+func New(host string, cert *string) *Proxy {
 	p := &Proxy{
 		transcoders: make(map[string]Transcoder),
 		ml:          nil,
+		host:        host,
+		cert:        cert,
 	}
 	return p
 }
@@ -36,7 +46,25 @@ func (p *Proxy) EnableMitm(ca, key string) error {
 	if err != nil {
 		return err
 	}
-	p.ml = newMitmListener(cf)
+
+	var config *tls.Config
+	if p.cert != nil {
+		roots, err := x509.SystemCertPool()
+		if err != nil {
+			return err
+		}
+		pem, err := ioutil.ReadFile(*p.cert)
+		if err != nil {
+			return err
+		}
+		ok := roots.AppendCertsFromPEM([]byte(pem))
+		if !ok {
+			return errors.New("failed to parse root certificate")
+		}
+		config = &tls.Config{RootCAs: roots}
+	}
+
+	p.ml = newMitmListener(cf, config)
 	go http.Serve(p.ml, p)
 	return nil
 }
@@ -95,6 +123,14 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 		return p.handleConnect(w, r)
 	}
 
+	host := r.URL.Host
+	if host == "" {
+		host = r.Host
+	}
+	if hostname, err := os.Hostname(); host == p.host || (err == nil && host == hostname+p.host) {
+		return p.handleLocalRequest(w, r)
+	}
+
 	resp, err := forward(r)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -110,6 +146,39 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	atomic.AddUint64(&p.ReadCount, read)
 	atomic.AddUint64(&p.WriteCount, written)
 	return err
+}
+
+func (p *Proxy) handleLocalRequest(w http.ResponseWriter, r *http.Request) error {
+	if r.Method == "GET" && (r.URL.Path == "" || r.URL.Path == "/") {
+		w.Header().Set("Content-Type", "text/html")
+		read := atomic.LoadUint64(&p.ReadCount)
+		written := atomic.LoadUint64(&p.WriteCount)
+		io.WriteString(w, fmt.Sprintf(`<html>
+<head>
+<title>compy</title>
+</head>
+<body>
+<h1>compy</h1>
+<ul>
+<li>total transcoded: %d -> %d (%3.1f%%)</li>
+<li><a href="/cacert">CA cert</a></li>
+<li><a href="https://github.com/barnacs/compy">GitHub</a></li>
+</ul>
+</body>
+</html>`, read, written, float64(written)/float64(read)*100))
+		return nil
+	} else if r.Method == "GET" && r.URL.Path == "/cacert" {
+		if p.cert == nil {
+			http.NotFound(w, r)
+			return nil
+		}
+		w.Header().Set("Content-Type", "application/x-x509-ca-cert")
+		http.ServeFile(w, r, *p.cert)
+		return nil
+	} else {
+		w.WriteHeader(http.StatusNotImplemented)
+		return nil
+	}
 }
 
 func forward(r *http.Request) (*http.Response, error) {

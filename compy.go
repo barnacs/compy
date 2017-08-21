@@ -31,7 +31,7 @@ var (
 func main() {
 	flag.Parse()
 
-	p := proxy.New()
+	p := proxy.New(*host, cert)
 
 	if (*ca == "") != (*caKey == "") {
 		log.Fatalln("must specify both CA certificate and key")

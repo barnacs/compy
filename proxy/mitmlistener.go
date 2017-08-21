@@ -6,14 +6,16 @@ import (
 )
 
 type mitmListener struct {
-	c  chan net.Conn
-	cf *certFaker
+	c      chan net.Conn
+	cf     *certFaker
+	config *tls.Config
 }
 
-func newMitmListener(cf *certFaker) *mitmListener {
+func newMitmListener(cf *certFaker, config *tls.Config) *mitmListener {
 	return &mitmListener{
-		c:  make(chan net.Conn),
-		cf: cf,
+		c:      make(chan net.Conn),
+		cf:     cf,
+		config: config,
 	}
 }
 
@@ -30,7 +32,7 @@ func (l *mitmListener) Addr() net.Addr {
 }
 
 func (l *mitmListener) Serve(conn net.Conn, host string) (net.Conn, error) {
-	sconn, err := tls.Dial("tcp", host, nil)
+	sconn, err := tls.Dial("tcp", host, l.config)
 	if err != nil {
 		return nil, err
 	}
