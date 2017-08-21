@@ -82,10 +82,6 @@ func (p *Proxy) checkHttpBasicAuth(auth string) bool {
 }
 
 func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
-	if r.Method == "CONNECT" {
-		return p.handleConnect(w, r)
-	}
-
 	// TODO: only HTTPS?
 	if p.user != "" {
 		if !p.checkHttpBasicAuth(r.Header.Get("Proxy-Authorization")) {
@@ -93,6 +89,10 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 			w.WriteHeader(http.StatusProxyAuthRequired)
 			return nil
 		}
+	}
+
+	if r.Method == "CONNECT" {
+		return p.handleConnect(w, r)
 	}
 
 	resp, err := forward(r)
