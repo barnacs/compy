@@ -89,6 +89,16 @@ compy -host :9999
 
 For compression, transcoding and minification options, see `compy --help`
 
+Docker Usage
+------------
+
+Andrew Gaul publishes unofficial Docker images at
+https://hub.docker.com/r/andrewgaul/compy/ .  You can configure via:
+
+```
+sudo docker run --name=compy --env CERTIFICATE_DOMAIN=example.com --publish 9999:9999 andrewgaul/compy
+```
+
 References
 ----------
 
