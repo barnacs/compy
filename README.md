@@ -5,8 +5,8 @@ Compy is an HTTP/HTTPS forward proxy with content compression/transcoding capabi
 One use case is to reduce bandwidth usage when browsing on limited mobile broadband connection.
 
 
-Features:
----------
+Features
+--------
 
 - HTTPS proxy (encrypted connection between client and proxy)
 - man in the middle support (compress HTTPS traffic)
@@ -21,9 +21,17 @@ Features:
 Installation
 ------------
 
+compy needs a few libraries to compile.
+On Ubuntu, run `apt-get install -y libjpeg8 openssl ssl-cert`.
+On macOS, run `brew install jpeg`.  Then compile via:
+
+```ShellSession
+$ go get github.com/barnacs/compy
+$ cd go/src/github.com/barnacs/compy/
+$ go install
 ```
-go get github.com/barnacs/compy
-```
+
+go will generate the binary at `go/bin/compy`.
 
 ### HTTPS
 To use the proxy over HTTPS, you will need a certificate for your host. If you don't already have one, you can get one for [free](https://letsencrypt.org/) or you can generate a self-signed cert by running:  
