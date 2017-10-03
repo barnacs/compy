@@ -20,10 +20,10 @@ var (
 	user  = flag.String("user", "", "proxy user name")
 	pass  = flag.String("pass", "", "proxy password")
 
-	brotli = flag.Int("brotli", -1, "Brotli compression level (0-11, default 6)")
+	brotli = flag.Int("brotli", 6, "Brotli compression level (0-11)")
 	jpeg   = flag.Int("jpeg", 50, "jpeg quality (1-100, 0 to disable)")
 	gif    = flag.Bool("gif", true, "transcode gifs into static images")
-	gzip   = flag.Int("gzip", -1, "gzip compression level (0-9, default 6)")
+	gzip   = flag.Int("gzip", 6, "gzip compression level (0-9)")
 	png    = flag.Bool("png", true, "transcode png")
 	minify = flag.Bool("minify", false, "minify css/html/js - WARNING: tends to break the web")
 )
