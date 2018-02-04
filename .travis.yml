@@ -1,0 +1,8 @@
+language: go
+sudo: required
+dist: trusty
+install:
+  - go get -t
+  - go build
+go:
+  - 1.8.1
