@@ -48,7 +48,7 @@ func (c *mitmConn) RemoteAddr() net.Addr {
 }
 
 func (c *mitmConn) LocalAddr() net.Addr {
-	panic("not implemented")
+	return addr("")
 }
 
 func (c *mitmConn) SetDeadline(t time.Time) error {
