@@ -27,9 +27,17 @@ func newCertFaker(caPath, keyPath string) (*certFaker, error) {
 }
 
 func (cf *certFaker) FakeCert(original *x509.Certificate) (*tls.Certificate, error) {
-	fakeCertData, err := x509.CreateCertificate(nil, original, cf.ca, cf.ca.PublicKey, cf.key)
+	template := cf.createTemplate(original)
+	fakeCertData, err := x509.CreateCertificate(nil, template, cf.ca, cf.ca.PublicKey, cf.key)
 	return &tls.Certificate{
 		Certificate: [][]byte{fakeCertData},
 		PrivateKey:  cf.key,
 	}, err
+}
+
+func (cf *certFaker) createTemplate(cert *x509.Certificate) *x509.Certificate {
+	template := &x509.Certificate{}
+	*template = *cert
+	template.SignatureAlgorithm = cf.ca.SignatureAlgorithm
+	return template
 }
