@@ -24,14 +24,14 @@ type Proxy struct {
 	user        string
 	pass        string
 	host        string
-	cert        *string
+	cert        string
 }
 
 type Transcoder interface {
 	Transcode(*ResponseWriter, *ResponseReader, http.Header) error
 }
 
-func New(host string, cert *string) *Proxy {
+func New(host string, cert string) *Proxy {
 	p := &Proxy{
 		transcoders: make(map[string]Transcoder),
 		ml:          nil,
@@ -48,12 +48,12 @@ func (p *Proxy) EnableMitm(ca, key string) error {
 	}
 
 	var config *tls.Config
-	if p.cert != nil {
+	if p.cert != "" {
 		roots, err := x509.SystemCertPool()
 		if err != nil {
 			return err
 		}
-		pem, err := ioutil.ReadFile(*p.cert)
+		pem, err := ioutil.ReadFile(p.cert)
 		if err != nil {
 			return err
 		}
@@ -168,12 +168,12 @@ func (p *Proxy) handleLocalRequest(w http.ResponseWriter, r *http.Request) error
 </html>`, read, written, float64(written)/float64(read)*100))
 		return nil
 	} else if r.Method == "GET" && r.URL.Path == "/cacert" {
-		if p.cert == nil {
+		if p.cert == "" {
 			http.NotFound(w, r)
 			return nil
 		}
 		w.Header().Set("Content-Type", "application/x-x509-ca-cert")
-		http.ServeFile(w, r, *p.cert)
+		http.ServeFile(w, r, p.cert)
 		return nil
 	} else {
 		w.WriteHeader(http.StatusNotImplemented)
