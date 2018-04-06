@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/barnacs/compy/proxy"
-	tc "github.com/barnacs/compy/transcoder"
 	"log"
 	"os"
 	"os/signal"
 	"sync/atomic"
+
+	"github.com/barnacs/compy/proxy"
+	tc "github.com/barnacs/compy/transcoder"
 )
 
 var (
