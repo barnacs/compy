@@ -13,9 +13,9 @@ RUN mkdir -p /usr/local/ && \
     curl -O https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz && \
     tar xf go1.9.linux-amd64.tar.gz -C /usr/local
 
-RUN mkdir -p /go/src/github.com/barnacs/compy/
-COPY . /go/src/github.com/barnacs/compy/
-WORKDIR /go/src/github.com/barnacs/compy
+RUN mkdir -p /root/go/src/github.com/barnacs/compy/
+COPY . /root/go/src/github.com/barnacs/compy/
+WORKDIR /root/go/src/github.com/barnacs/compy
 RUN /usr/local/go/bin/go get -d -v ./...
 RUN /usr/local/go/bin/go build -v
 
@@ -34,8 +34,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
 WORKDIR /opt/compy
 COPY \
     --from=compy-builder \
-    /go/src/github.com/barnacs/compy/compy \
-    /go/src/github.com/barnacs/compy/docker.sh \
+    /root/go/src/github.com/barnacs/compy/compy \
+    /root/go/src/github.com/barnacs/compy/docker.sh \
     /opt/compy/
 
 # TODO: configure HTTP BASIC authentication
