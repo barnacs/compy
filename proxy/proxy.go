@@ -113,7 +113,7 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	// TODO: only HTTPS?
 	if p.user != "" {
 		if !p.checkHttpBasicAuth(r.Header.Get("Proxy-Authorization")) {
-			w.Header().Set("WWW-Authenticate", "Basic realm=\"Compy\"")
+			w.Header().Set("Proxy-Authenticate", "Basic realm=\"Compy\"")
 			w.WriteHeader(http.StatusProxyAuthRequired)
 			return nil
 		}
