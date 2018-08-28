@@ -37,7 +37,7 @@ var _ = Suite(&CompyTest{})
 func (s *CompyTest) SetUpSuite(c *C) {
 	s.server = httptest.NewServer(httpbin.GetMux())
 
-	s.proxy = proxy.New("localhost"+*host, nil)
+	s.proxy = proxy.New("localhost"+*host, "")
 	s.proxy.AddTranscoder("image/gif", &tc.Gif{})
 	s.proxy.AddTranscoder("image/jpeg", tc.NewJpeg(50))
 	s.proxy.AddTranscoder("image/png", &tc.Png{})
