@@ -117,6 +117,7 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 			w.WriteHeader(http.StatusProxyAuthRequired)
 			return nil
 		}
+		r.Header.Del("Proxy-Authorization")
 	}
 
 	if r.Method == "CONNECT" {
