@@ -2,17 +2,19 @@ package transcoder
 
 import (
 	"compress/gzip"
-	"github.com/barnacs/compy/proxy"
-	brotlienc "gopkg.in/kothar/brotli-go.v0/enc"
 	"net/http"
 	"strings"
+
+	"github.com/barnacs/compy/proxy"
+	brotlidec "gopkg.in/kothar/brotli-go.v0/dec"
+	brotlienc "gopkg.in/kothar/brotli-go.v0/enc"
 )
 
 type Zip struct {
 	proxy.Transcoder
 	BrotliCompressionLevel int
 	GzipCompressionLevel   int
-	SkipGzipped            bool
+	SkipCompressed         bool
 }
 
 func (t *Zip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader, headers http.Header) error {
@@ -28,13 +30,21 @@ func (t *Zip) Transcode(w *proxy.ResponseWriter, r *proxy.ResponseReader, header
 	}
 
 	// always gunzip if the client supports Brotli
-	if r.Header().Get("Content-Encoding") == "gzip" && (shouldBrotli || !t.SkipGzipped) {
+	if r.Header().Get("Content-Encoding") == "gzip" && (shouldBrotli || !t.SkipCompressed) {
 		gzr, err := gzip.NewReader(r.Reader)
 		if err != nil {
 			return err
 		}
 		defer gzr.Close()
 		r.Reader = gzr
+		r.Header().Del("Content-Encoding")
+		w.Header().Del("Content-Encoding")
+	}
+
+	if r.Header().Get("Content-Encoding") == "br" && !t.SkipCompressed {
+		brr := brotlidec.NewBrotliReader(r.Reader)
+		defer brr.Close()
+		r.Reader = brr
 		r.Header().Del("Content-Encoding")
 		w.Header().Del("Content-Encoding")
 	}
