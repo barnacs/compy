@@ -144,7 +144,7 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	if r.Header.Get("Accept-Encoding") != "" {
-		supportedComp := p.StripUnsupportedEncodings(r.Header.Get("Accepted-Encoding")
+		supportedComp := p.StripUnsupportedEncodings(r.Header.Get("Accepted-Encoding"))
 
 		if supportedComp != "" {
 			r.Header.Set("Accept-Encoding", supportedComp)
