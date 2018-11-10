@@ -15,7 +15,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/ahmetalpbalkan/go-httpbin"
+	"github.com/ahmetb/go-httpbin"
 	"github.com/barnacs/compy/proxy"
 	tc "github.com/barnacs/compy/transcoder"
 	"github.com/chai2010/webp"
