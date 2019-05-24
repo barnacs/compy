@@ -101,11 +101,19 @@ For compression, transcoding and minification options, see `compy --help`
 Docker Usage
 ------------
 
-Andrew Gaul publishes unofficial Docker images at
-https://hub.docker.com/r/andrewgaul/compy/ .  You can configure via:
-
+To build the docker image just run in the git repository
 ```
-sudo docker run --name=compy --env CERTIFICATE_DOMAIN=example.com --publish 9999:9999 andrewgaul/compy
+docker build -t compy .
+```
+
+To run the container
+```
+docker run -d --name compy -p 9999:9999 compy
+```
+
+To run the container with https enabled. You need to generate the certificates on your host and provide the path to docker.
+```
+docker run -d --name compy -p 9999:9999 -v $PWD/cert.crt:/cert.crt -v $PWD/cert.key:/cert.key -v $PWD/ca.crt:/ca.crt -v $PWD/ca.key:/ca.key compy -cert cert.crt -key cert.key -ca ca.crt -cakey ca.key
 ```
 
 References
