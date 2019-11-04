@@ -113,6 +113,7 @@ References
 
 * [Google Flywheel](https://www.usenix.org/conference/nsdi15/technical-sessions/presentation/agababov) - NSDI 2015 paper discussing techniques used by Chrome data saver
 * [Mozilla Janus](https://wiki.mozilla.org/Mobile/Janus) - now-defunct experiment similar to compy
+* [WANProxy](http://wanproxy.org/) - general-purpose TCP compression
 * [Ziproxy](https://en.wikipedia.org/wiki/Ziproxy) - older approach similar to compy
 
 Credits
