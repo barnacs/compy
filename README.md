@@ -23,7 +23,7 @@ Installation
 
 compy needs a few libraries to compile.
 On Fedora, run `dnf install -y libjpeg-devel`
-On Ubuntu, run `apt-get install -y libjpeg8 openssl ssl-cert`.
+On Ubuntu, run `apt-get install -y libjpeg8-dev openssl ssl-cert`.
 On macOS, run `brew install jpeg`.  Then compile via:
 
 ```ShellSession
