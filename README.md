@@ -111,6 +111,7 @@ sudo docker run --name=compy --env CERTIFICATE_DOMAIN=example.com --publish 9999
 References
 ----------
 
+* [Bandwidth Hero](https://github.com/ayastreb/bandwidth-hero) - similar to compy
 * [Google Flywheel](https://www.usenix.org/conference/nsdi15/technical-sessions/presentation/agababov) - NSDI 2015 paper discussing techniques used by Chrome data saver
 * [Mozilla Janus](https://wiki.mozilla.org/Mobile/Janus) - now-defunct experiment similar to compy
 * [WANProxy](http://wanproxy.org/) - general-purpose TCP compression
