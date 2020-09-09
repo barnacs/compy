@@ -138,9 +138,11 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("error forwarding request: %s", err)
 	}
 	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	source_type := http.DetectContentType(body)
 	rw := newResponseWriter(w)
 	rr := newResponseReader(resp)
-	err = p.proxyResponse(rw, rr, r.Header)
+	err = p.proxyResponse(rw, rr, r.Header, source_type)
 	read := rr.counter.Count()
 	written := rw.rw.Count()
 	log.Printf("transcoded: %d -> %d (%3.1f%%)", read, written, float64(written)/float64(read)*100)
