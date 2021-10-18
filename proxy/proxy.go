@@ -138,10 +138,10 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("error forwarding request: %s", err)
 	}
 	defer resp.Body.Close()
+	user_agent = r.Header().Get("User-Agent")
+	w.Header().Set("User-Agent", user_agent)
 	rw := newResponseWriter(w)
 	rr := newResponseReader(resp)
-	user_agent = r.header().Get("User-Agent")
-	w.header().Set("User-Agent", user_agent)
 	err = p.proxyResponse(rw, rr, r.Header)
 	read := rr.counter.Count()
 	written := rw.rw.Count()
