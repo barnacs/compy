@@ -1,6 +1,8 @@
 package proxy
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
@@ -11,6 +13,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"strings"
 	"sync/atomic"
@@ -138,8 +141,10 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 		return fmt.Errorf("error forwarding request: %s", err)
 	}
 	defer resp.Body.Close()
-	user_agent = r.Header().Get("User-Agent")
+	user_agent := r.Header.Get("User-Agent")
 	w.Header().Set("User-Agent", user_agent)
+	// content_encoding := w.Header.Get("content-encoding")
+	// w.Header().Set("content-encoding", content_encoding)
 	rw := newResponseWriter(w)
 	rr := newResponseReader(resp)
 	err = p.proxyResponse(rw, rr, r.Header)
@@ -201,11 +206,47 @@ func forward(r *http.Request) (*http.Response, error) {
 
 func (p *Proxy) proxyResponse(w *ResponseWriter, r *ResponseReader, headers http.Header) error {
 	w.takeHeaders(r)
-	transcoder, found := p.transcoders[r.ContentType()]
+	content_type := r.ContentType()
+	transcoder, found := p.transcoders[content_type]
 	if !found {
 		return w.ReadFrom(r)
 	}
 	w.setChunked()
+
+	body, err := httputil.DumpResponse(r.r, true)
+	body_copy := body
+	if err != nil {
+		log.Fatal(err)
+	}
+	resp_reader := bufio.NewReader(bytes.NewReader(body))
+	resp_reader_copy := bufio.NewReader(bytes.NewReader(body_copy))
+	resp, err := http.ReadResponse(resp_reader, nil)
+	resp_copy, err := http.ReadResponse(resp_reader_copy, nil)
+	body_data, err := io.ReadAll(resp_copy.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	real_content_type := ""
+	if body_data[0] == 0xff && body_data[1] == 0xd8 {
+		real_content_type = "image/jpeg"
+	}
+	if body_data[0] == 0x89 && body_data[1] == 0x50 && body_data[2] == 0x4E &&
+		body_data[3] == 0x47 && body_data[4] == 0x0D && body_data[5] == 0x0A && body_data[6] == 0x1A {
+		real_content_type = "image/gif"
+	}
+	if body_data[0] == 0x47 && body_data[1] == 0x49 && body_data[2] == 0x46 {
+		real_content_type = "image/png"
+	}
+	if real_content_type != "" && real_content_type != content_type {
+		transcoder = p.transcoders[real_content_type]
+		log.Printf("Content-Type=%s is different with the data type %s", content_type, real_content_type)
+	}
+
+	r = newResponseReader(resp)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	if err := transcoder.Transcode(w, r, headers); err != nil {
 		return fmt.Errorf("transcoding error: %s", err)
 	}
