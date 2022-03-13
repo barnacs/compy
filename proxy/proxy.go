@@ -143,8 +143,6 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	defer resp.Body.Close()
 	user_agent := r.Header.Get("User-Agent")
 	w.Header().Set("User-Agent", user_agent)
-	// content_encoding := w.Header.Get("content-encoding")
-	// w.Header().Set("content-encoding", content_encoding)
 	rw := newResponseWriter(w)
 	rr := newResponseReader(resp)
 	err = p.proxyResponse(rw, rr, r.Header)
@@ -227,14 +225,11 @@ func (p *Proxy) proxyResponse(w *ResponseWriter, r *ResponseReader, headers http
 		log.Fatal(err)
 	}
 	real_content_type := ""
-	if body_data[0] == 0xff && body_data[1] == 0xd8 {
+	if bytes.HasPrefix(body_data, []byte{0xff, 0xd8}) {
 		real_content_type = "image/jpeg"
-	}
-	if body_data[0] == 0x89 && body_data[1] == 0x50 && body_data[2] == 0x4E &&
-		body_data[3] == 0x47 && body_data[4] == 0x0D && body_data[5] == 0x0A && body_data[6] == 0x1A {
+	} else if bytes.HasPrefix(body_data, []byte{0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A}) {
 		real_content_type = "image/gif"
-	}
-	if body_data[0] == 0x47 && body_data[1] == 0x49 && body_data[2] == 0x46 {
+	} else if bytes.HasPrefix(body_data, []byte{0x47, 0x49, 0x46}) {
 		real_content_type = "image/png"
 	}
 	if real_content_type != "" && real_content_type != content_type {
