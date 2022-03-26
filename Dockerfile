@@ -1,47 +1,19 @@
-FROM ubuntu:16.04 as compy-builder
-MAINTAINER Barna Csorogi <barnacs@justletit.be>
+FROM golang:1.12-alpine as builder
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        curl \
-        g++ \
-        git \
-        libjpeg8-dev
+WORKDIR /root/go/src/github.com/barnacs/compy/
 
-RUN mkdir -p /usr/local/ && \
-    curl -O https://storage.googleapis.com/golang/go1.9.linux-amd64.tar.gz && \
-    tar xf go1.9.linux-amd64.tar.gz -C /usr/local
+COPY . .
 
-RUN mkdir -p /root/go/src/github.com/barnacs/compy/
-COPY . /root/go/src/github.com/barnacs/compy/
-WORKDIR /root/go/src/github.com/barnacs/compy
-RUN /usr/local/go/bin/go get -d -v ./...
-RUN /usr/local/go/bin/go build -v
+RUN apk add --no-cache --no-progress git g++ libjpeg-turbo-dev
+RUN go get -d -v ./...
+RUN go build -ldflags='-extldflags "-static" -s -w' -o /go/bin/compy
 
-FROM ubuntu:16.04
-MAINTAINER Barna Csorogi <barnacs@justletit.be>
 
-RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y \
-        libjpeg8 \
-        openssl \
-        ssl-cert && \
-    DEBIAN_FRONTEND=noninteractive apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+FROM scratch
 
-WORKDIR /opt/compy
-COPY \
-    --from=compy-builder \
-    /root/go/src/github.com/barnacs/compy/compy \
-    /root/go/src/github.com/barnacs/compy/docker.sh \
-    /opt/compy/
+LABEL maintainer="Sandro Jäckel <sandro.jaeckel@gmail.com>"
 
-# TODO: configure HTTP BASIC authentication
-# TODO: user-provided certificates
-ENV \
-    CERTIFICATE_DOMAIN="localhost"
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /go/bin/compy compy
 
-EXPOSE 9999
-ENTRYPOINT ["./docker.sh"]
+ENTRYPOINT ["./compy"]
