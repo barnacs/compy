@@ -109,6 +109,25 @@ func (p *Proxy) checkHttpBasicAuth(auth string) bool {
 	return true
 }
 
+func (p *Proxy) stripUnsupportedEncodings(in_encs string) string {
+	out_encs := ""
+	enc := ""
+
+	tokens := strings.Split( strings.Replace( in_encs, " ", "", -1), ",")
+
+	for _,  arg := range tokens {
+		enc = strings.Split( arg, ";")[0]
+		if enc == "br" || enc == "gzip" {
+			if out_encs != "" {
+				out_encs += ", "
+			}
+			out_encs = out_encs + enc
+		}
+	}
+	fmt.Println( tokens)
+	return out_encs
+}
+
 func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 	// TODO: only HTTPS?
 	if p.user != "" {
@@ -122,6 +141,16 @@ func (p *Proxy) handle(w http.ResponseWriter, r *http.Request) error {
 
 	if r.Method == "CONNECT" {
 		return p.handleConnect(w, r)
+	}
+
+	if r.Header.Get("Accept-Encoding") != "" {
+		supportedComp := p.stripUnsupportedEncodings(r.Header.Get("Accepted-Encoding"))
+
+		if supportedComp != "" {
+			r.Header.Set("Accept-Encoding", supportedComp)
+		} else {
+			r.Header.Del("Accept-Encoding")
+		}
 	}
 
 	host := r.URL.Host
